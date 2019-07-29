@@ -102,36 +102,35 @@ $ helm uninstall my-redis
 ## [Rook](https://github.com/rook/rook)
 
 ```bash
+# 提前拉取需要的镜像
 $ docker pull rook/ceph:master
 
-# 安装 Rook Operator: https://rook.io/docs/rook/master/helm-operator.html
+# 部署 Rook Operator
+$ kubectl create -f https://raw.githubusercontent.com/rook/rook/release-1.0/cluster/examples/kubernetes/ceph/common.yaml
 $ kubectl create -f https://raw.githubusercontent.com/rook/rook/master/cluster/examples/kubernetes/ceph/operator.yaml
 
-# 创建 Rook cluster
-$ kubectl apply -f https://raw.githubusercontent.com/rook/rook/master/cluster/examples/kubernetes/ceph/cluster.yaml
-
-# 列出 rook-ceph 命名空间下的 pods
-$ kubectl -n rook-ceph get pod
+# 创建 Rook Ceph Cluster
+$ kubectl apply -f https://raw.githubusercontent.com/rook/rook/master/cluster/examples/kubernetes/ceph/cluster-test.yaml
 
 # 创建 storage pools.
-$ kubectl apply -f https://raw.githubusercontent.com/rook/rook/master/cluster/examples/kubernetes/ceph/pool.yaml
+$ kubectl apply -f https://raw.githubusercontent.com/rook/rook/master/cluster/examples/kubernetes/ceph/pool-test.yaml
 # 创建块存储(block storage)
-$ kubectl apply -f https://raw.githubusercontent.com/rook/rook/master/cluster/examples/kubernetes/ceph/storageclass.yaml
+$ kubectl apply -f https://raw.githubusercontent.com/rook/rook/master/cluster/examples/kubernetes/ceph/storageclass-test.yaml
 
 # 将 rook-block 设置为默认的 storageclass 
 $ kubectl patch storageclass rook-ceph-block -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
 ```
 
-```bash
-# Shared File System
+### Shared File System
 
+```bash
 # Create the File System
-kubectl create -f https://raw.githubusercontent.com/rook/rook/master/cluster/examples/kubernetes/ceph/filesystem.yaml
+$ kubectl create -f https://raw.githubusercontent.com/rook/rook/master/cluster/examples/kubernetes/ceph/filesystem-test.yaml
 
 # 启动rook-ceph-tools pod
-kubectl create -f https://raw.githubusercontent.com/rook/rook/master/cluster/examples/kubernetes/ceph/toolbox.yaml
+$ kubectl create -f https://raw.githubusercontent.com/rook/rook/master/cluster/examples/kubernetes/ceph/toolbox.yaml
 # 进入 pod
-kubectl -n rook-ceph exec -it rook-ceph-tools bash
+$ kubectl -n rook-ceph exec -it $(kubectl -n rook-ceph get pod -l "app=rook-ceph-tools" -o jsonpath='{.items[0].metadata.name}') bash
 
 # 获取挂载需要的主机挂载入口IP和用户密钥
 mon_endpoints=$(grep mon_host /etc/ceph/ceph.conf | awk '{print $3}')
@@ -151,12 +150,11 @@ df -h
 umount /cephfs
 ```
 
+### Object Storage
+
 ```bash
-# Object Storage
-
 # Create an Object Store
-kubectl create -f https://raw.githubusercontent.com/rook/rook/master/cluster/examples/kubernetes/ceph/object.yaml
-
+kubectl create -f https://raw.githubusercontent.com/rook/rook/master/cluster/examples/kubernetes/ceph/object-test.yaml
 # To confirm the object store is configured, wait for the rgw pod to start
 kubectl -n rook-ceph get pod -l app=rook-ceph-rgw
 
